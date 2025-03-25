@@ -1,7 +1,9 @@
-// filepath: /home/jonathanmcw/Development/top-battleship/jest.config.js
 export default {
-    testEnvironment: 'node',
+    testEnvironment: 'jsdom',
     transform: {
         '^.+\\.jsx?$': 'babel-jest',
+    },
+    moduleNameMapper: {
+        '\\.css$': '<rootDir>/tests/jest.mock.js', // Corrected regex for CSS files
     },
 };

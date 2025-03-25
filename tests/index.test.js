@@ -1,20 +1,31 @@
-import main from '../src/index';
+import { main } from '../src/index';
 
 describe("gameloop test", () => {
-    // it("should initialize the game correctly", () => {
-    //     const result = main.initializeGame();
-    //     expect(result).toBeDefined();
-    //     expect(result.players).toHaveLength(2);
-    // });
-
-    // it("should handle a player's turn", () => {
-    //     const gameState = main.initializeGame();
-    //     const turnResult = main.handleTurn(gameState, { x: 2, y: 3 });
-    //     expect(turnResult).toHaveProperty("hit");
-    //     expect(turnResult).toHaveProperty("gameOver");
-    // });
-    test("dummy", () => {
-        expect(1+1).toBe(2);
+    
+    beforeEach(() => {
+        // Set up the DOM
+        document.body.innerHTML = `
+            <header>
+                <h1>Battleship</h1>
+                <p id="instructions">Select a tile</p>
+            </header>
+            <main>
+                <div id="player-1" class="player"></div>
+                <div id="player-2" class="player"></div>
+            </main>
+        `;
     });
 
+    test("dummy", () => {
+        expect(1 + 1).toBe(2);
+    });
+
+    test("main function runs without errors", () => {
+        expect(() => main()).not.toThrow();
+    });
+
+    test('jsdom environment is working', () => {
+        expect(typeof document).toBe('object');
+        expect(typeof window).toBe('object');
+    });
 });
