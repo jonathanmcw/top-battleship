@@ -1,13 +1,9 @@
 import "./styles.css";
 import {Ship, Gameboard, Player} from './components.js';
-import {renderPlayer, renderRotateShip, renderPlaceShip} from './renderer.js';
+import {renderPlayer, renderShipRotation, renderShipPlacement, renderBoardSetup} from './renderer.js';
 
-export function main() {
-    
-    // Game start
-    const { player: player1, DOMplayer: DOMplayer1, DOMgameboard: DOMgameboard1 } = renderPlayer("Player 1", "#player-1");
-    const { player: player2, DOMplayer: DOMplayer2, DOMgameboard: DOMgameboard2 } = renderPlayer("Player 2", "#player-2");
 
+async function setupPlayers() {
     const ships = [
         new Ship('Carrier', 5),
         new Ship('Battleship', 4),
@@ -16,51 +12,144 @@ export function main() {
         new Ship('Destroyer', 2)
     ];
 
-    const DOMinstructions = document.querySelector("#instructions");
+    // Game start
+    const { player: player1, DOMplayer: DOMplayer1, DOMgameboard: DOMgameboard1 } = renderPlayer("Player 1", "human", "#player-1");
+    const { player: player2, DOMplayer: DOMplayer2, DOMgameboard: DOMgameboard2 } = renderPlayer("Player 2", "ai", "#player-2");
 
-    DOMinstructions.textContent = 'Place ship - Carrier ( 5 )';
+    return { ships, player1, DOMplayer1, DOMgameboard1, player2, DOMplayer2, DOMgameboard2 };
+}
 
-    const shipLength = 5;
+async function setupBoards({ships, player1, DOMgameboard1, player2, DOMgameboard2}) {
 
-    const DOMship = document.createElement('div');
-    DOMship.id = 'player1-ship0';
-    DOMship.dataset.length = shipLength;
-    DOMship.dataset.orientation = 'h';
-    DOMship.className = 'ship';
-    // DOMship.classList.add = 'length-5';
-    // DOMship.style.position = 'absolute';
+    return new Promise((resolve) => {
 
-    const DOMpointer = document.createElement('div');
-    DOMpointer.id = 'pointer';
-    DOMpointer.style.position = 'absolute';
-    DOMpointer.style.pointerEvents = 'none';
-    DOMpointer.appendChild(DOMship);
-    document.body.appendChild(DOMpointer);
+        const setupPlayer1 = () => {
+            DOMgameboard1.classList.toggle("active");
 
-    document.addEventListener('mousemove', (event) => {
-        DOMpointer.style.left = `${event.pageX - 20}px`;
-        DOMpointer.style.top = `${event.pageY - 20}px`;
-    });
+            renderBoardSetup(player1, ships, () => {
+                DOMgameboard1.classList.toggle("active");
+                DOMgameboard2.classList.toggle("active");
+                setupPlayer2();
+            });
+        };
 
-    document.addEventListener('wheel', (event) => {
-        renderRotateShip(DOMship, DOMship.dataset.length);
-    });
-
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'r') {
-            renderRotateShip(DOMship, DOMship.dataset.length);
-        }
-    });
-
-    document.addEventListener('click', (event) => {
-        if (event.target.classList.contains('cell')) {
-            const x = parseInt(event.target.dataset.x);
-            const y = parseInt(event.target.dataset.y);
-            renderPlaceShip(player1, ships[0], x ,y ,DOMship.dataset.orientation ,shipLength);
-        }
-    }, { once: false });
-
+        const setupPlayer2 = () => {
+            renderBoardSetup(player2, ships, () => {
+                alert("Both boards are set up. Game ready to start!");
+                resolve();
+            });
+        };
     
+        setupPlayer1();
+    });
+}
+
+function gameLoop({ships, player1, DOMgameboard1, player2, DOMgameboard2}) {
+
+    const startGame = (currentPlayer) => {
+        // if areShipsAllSunk of either side, then we found a winner 
+        // let currentPlayer = 1;
+
+        const targetPlayer = currentPlayer === 1 
+            ? player2 
+            : player1;
+
+        if (targetPlayer.gameboard.areShipsAllSunk()) {
+            alert(`end game, player ${currentPlayer} wins`);
+        }
+
+        const DOMinstructions = document.querySelector("#instructions");
+
+        DOMinstructions.textContent = 'Select a cell to send missile';
+
+        const switchPlayer = () => {
+            DOMgameboard1.classList.toggle("active");
+            DOMgameboard2.classList.toggle("active");
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            console.log(currentPlayer);
+            return currentPlayer;
+        }
+
+        const handleAttack = (event) => {
+            if (event.target.classList.contains('cell') && !event.target.classList.contains('attacked')) {
+                
+                const x = parseInt(event.target.dataset.x);
+                const y = parseInt(event.target.dataset.y);
+
+                const hit = targetPlayer.gameboard.receiveAttack(x,y);
+                console.log(`Player ${currentPlayer}: ${x},${y} | hit: ${hit}`);
+
+                document.removeEventListener('click', handleAttack);
+
+                if (hit) {
+                    event.target.classList.add('hit');
+                }
+                event.target.classList.add('attacked');
+
+                const nextPlayer = switchPlayer();                
+                startGame(nextPlayer);
+            }
+        }
+
+        const aiAttack = () => {
+            const x = Math.floor(Math.random() * 10);
+            const y = Math.floor(Math.random() * 10);
+            const targetCell = DOMgameboard1.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+
+            if (targetCell.classList.contains('attacked')) {
+                aiAttack();
+                return;
+            }
+
+            const hit = targetPlayer.gameboard.receiveAttack(x,y);
+            console.log(`Player ${currentPlayer}: ${x},${y} | hit: ${hit}`);
+
+            if (hit) {
+                targetCell.classList.add('hit');
+            }
+            targetCell.classList.add('attacked');
+
+            const nextPlayer = switchPlayer();                
+            startGame(nextPlayer);
+        }
+
+        if (targetPlayer.type === 'ai') {
+            document.addEventListener("click", handleAttack);
+        } else {
+            aiAttack();
+            // alert('AI turn');
+            // document.addEventListener("click", handleAttack);
+        }
+ 
+
+    }
+
+    let currentPlayer = 1;
+
+    startGame(currentPlayer);
+
+}
+
+export async function main() {
+    
+    const players = await setupPlayers();
+    await setupBoards(players);
+    await gameLoop(players);
+    
+    //GameLoop 
+        // Player 1 - click on Player 2 - tiles to attack
+        // 
+
+    /* 
+    Next couple steps:
+    1- Player 1 - place ships on grid
+    2- Player 2 ( Bot ) - automatically place ships
+    3- Once ready - User clicks on "Play to start the game"
+    4- Player 1 - expected to click on the grid
+        5- Marks whether a ship is hit 
+        6- Condition checks
+    5- Till winner is found    
+    */ 
 
     // Ensure both boards are visible
     // board1.style.display = "block";
@@ -68,15 +157,10 @@ export function main() {
     // const board1 = player1.querySelector(".gameboard");
     // const board2 = player2.querySelector(".gameboard");
 
-    DOMgameboard2.classList.add("disabled");
-
     // Set up gameboard ( render )
-
     // Player 1 vs 2 selection 
-
-    // LOOP Player 1, waiting for click
-    
-    // Check and declare winner 
+    // LOOP Player 1, waiting for click 
+    // Check and declare winner
 
 }
 

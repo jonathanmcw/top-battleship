@@ -9,6 +9,9 @@ export class Ship {
 
     hit() {
         ++this.hitCount;
+        if(this.isSunk()) {
+            console.log(`ship ${this.name} is sunk`);
+        }
     }
 
     isSunk() {
@@ -42,23 +45,31 @@ export class Gameboard {
         // x and y should be 0 to 9
 
         // Test to make sure slot is available
-        const shipCor = Array.from({ length: ship.length }, (_, i) => {
+        let isValidPlacement = true;
+
+        const shipCors = Array.from({ length: ship.length }, (_, i) => {
+            if (!isValidPlacement) return null;
+
             const newX = orientation === "h" ? x + i : x;
             const newY = orientation === "v" ? y + i : y;
 
             if (newX > 9 || newY > 9 || this.cor[newX][newY].ship !== null) {
-            throw new Error('Invalid placement: Ship goes out of bounds or overlaps another ship');
+                isValidPlacement = false;
+                return null;
             }
             return [newX, newY];
-        });
+        }).filter(Boolean);
 
-        if ( shipCor.length == ship.length ) {
-            shipCor.forEach(([x, y]) => {
-                this.cor[x][y].ship = ship;
-            });
+        if (!isValidPlacement || shipCors.length !== ship.length) {
+            // throw new Error('Invalid placement: Ship goes out of bounds or overlaps another ship');
+            // alert("No");
+            return false;
         }
 
+        shipCors.forEach(([x, y]) => { this.cor[x][y].ship = ship });
         this.ships.push(ship);
+
+        return shipCors;
     }
 
     receiveAttack(x, y) {
@@ -77,11 +88,12 @@ export class Gameboard {
 
 export class Player {
 
-    constructor(type) {
+    constructor(type, HTMLplayerID) {
         if (type !== 'human' && type !== 'ai') {
             throw new Error("Type must be either 'human' or 'ai'");
         }
 
+        this.HTMLplayerID = HTMLplayerID;
         this.type = type;
         this.gameboard = new Gameboard;
 
