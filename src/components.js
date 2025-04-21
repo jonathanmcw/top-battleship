@@ -76,6 +76,7 @@ export class Gameboard {
         this.cor[x][y].attacked = true;
         if ( this.cor[x][y].ship) {
             this.cor[x][y].ship.hit();
+            console.log(`${this.cor[x][y].ship.name} - Hit count: ${this.cor[x][y].ship.hitCount}`);
             return true;
         }
         return false;

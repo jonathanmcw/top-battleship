@@ -2,31 +2,35 @@ import "./styles.css";
 import {Ship, Gameboard, Player} from './components.js';
 import {renderPlayer, renderShipRotation, renderShipPlacement, renderBoardSetup} from './renderer.js';
 
-
-async function setupPlayers() {
-    const ships = [
+function createShips() {
+    return [
         new Ship('Carrier', 5),
         new Ship('Battleship', 4),
         new Ship('Cruiser', 3),
         new Ship('Submarine', 3),
         new Ship('Destroyer', 2)
     ];
+}
+
+function setupPlayers() {
+    const shipsPlayer1 = createShips();
+    const shipsPlayer2 = createShips();
 
     // Game start
     const { player: player1, DOMplayer: DOMplayer1, DOMgameboard: DOMgameboard1 } = renderPlayer("Player 1", "human", "#player-1");
     const { player: player2, DOMplayer: DOMplayer2, DOMgameboard: DOMgameboard2 } = renderPlayer("Player 2", "ai", "#player-2");
 
-    return { ships, player1, DOMplayer1, DOMgameboard1, player2, DOMplayer2, DOMgameboard2 };
+    return { shipsPlayer1, shipsPlayer2, player1, DOMplayer1, DOMgameboard1, player2, DOMplayer2, DOMgameboard2 };
 }
 
-async function setupBoards({ships, player1, DOMgameboard1, player2, DOMgameboard2}) {
+async function setupBoards({shipsPlayer1, shipsPlayer2, player1, DOMgameboard1, player2, DOMgameboard2}) {
 
     return new Promise((resolve) => {
 
         const setupPlayer1 = () => {
             DOMgameboard1.classList.toggle("active");
 
-            renderBoardSetup(player1, ships, () => {
+            renderBoardSetup(player1, shipsPlayer1, () => {
                 DOMgameboard1.classList.toggle("active");
                 DOMgameboard2.classList.toggle("active");
                 setupPlayer2();
@@ -34,7 +38,7 @@ async function setupBoards({ships, player1, DOMgameboard1, player2, DOMgameboard
         };
 
         const setupPlayer2 = () => {
-            renderBoardSetup(player2, ships, () => {
+            renderBoardSetup(player2, shipsPlayer2, () => {
                 alert("Both boards are set up. Game ready to start!");
                 resolve();
             });
@@ -91,6 +95,8 @@ function gameLoop({ships, player1, DOMgameboard1, player2, DOMgameboard2}) {
             }
         }
 
+        // BUG - AI PLAYER SEEMS TO BE ABLE TO SUNK PLAYER SHIP A LOT FASTER -- NEED TO DOUBLE CHECK ARE BOTH SHIPS SEPARATED
+        // CHECK WINNING CONDITIONS, ARE BOTH SHIPS LINKED TO SAME ARRAY?
         const aiAttack = () => {
             const x = Math.floor(Math.random() * 10);
             const y = Math.floor(Math.random() * 10);
@@ -120,8 +126,6 @@ function gameLoop({ships, player1, DOMgameboard1, player2, DOMgameboard2}) {
             // alert('AI turn');
             // document.addEventListener("click", handleAttack);
         }
- 
-
     }
 
     let currentPlayer = 1;
@@ -130,16 +134,14 @@ function gameLoop({ships, player1, DOMgameboard1, player2, DOMgameboard2}) {
 
 }
 
-export async function main() {
+async function main() {
     
-    const players = await setupPlayers();
+    const players = setupPlayers();
     await setupBoards(players);
-    await gameLoop(players);
+    gameLoop(players);
     
     //GameLoop 
         // Player 1 - click on Player 2 - tiles to attack
-        // 
-
     /* 
     Next couple steps:
     1- Player 1 - place ships on grid
@@ -161,7 +163,6 @@ export async function main() {
     // Player 1 vs 2 selection 
     // LOOP Player 1, waiting for click 
     // Check and declare winner
-
 }
 
 document.addEventListener("DOMContentLoaded", () => {

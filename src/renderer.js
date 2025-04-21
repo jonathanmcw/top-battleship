@@ -1,17 +1,15 @@
 import { Ship, Player, Gameboard } from "./components";
 
 export function renderPlayer(playerName, playerType, HTMLplayerID) {
+
     const player = new Player(playerType, HTMLplayerID);
-
     const DOMplayer = document.querySelector(HTMLplayerID);
-
     const titleElement = document.createElement('h2');
     titleElement.textContent = playerName;
     DOMplayer.appendChild(titleElement);
 
     const DOMgameboard = document.createElement('div');
     DOMgameboard.className = 'gameboard';
-
     DOMplayer.appendChild(DOMgameboard);
 
     for (let i = 0; i < 10; i++) {
@@ -48,19 +46,14 @@ export function renderShipPlacement(player, ship, x, y, orientation) {
             const cell = gameboard.querySelector(`[data-x="${x}"][data-y="${y}"]`);
             cell.classList.add("ship-placed");
         });
-
         return true;
     }
-
     return false;
-
 }
 
 export function renderBoardSetup(player, ships, callback) {
-
     // if human, do so by clicks
     // if AI, do so automatically 
-
     const DOMinstructions = document.querySelector("#instructions");
     const MSGallShipsPlaced = 'All ships placed!';
 
@@ -78,11 +71,6 @@ export function renderBoardSetup(player, ships, callback) {
         const ship = ships[currentShipIndex];
         DOMinstructions.textContent = `Place ship - ${ship.name} ( ${ship.length} )`;
 
-        // const DOMpointer = document.createElement('div');
-        // DOMpointer.id = 'pointer';
-        // DOMpointer.style.position = 'absolute';
-        // DOMpointer.style.pointerEvents = 'none';
-
         const DOMship = document.createElement('div');
         DOMship.style.position = 'absolute';
         DOMship.style.pointerEvents = 'none';
@@ -93,8 +81,6 @@ export function renderBoardSetup(player, ships, callback) {
         DOMship.style.height = '40px';
         DOMship.className = 'ship';
 
-        // DOMpointer.appendChild(DOMship);
-        // document.body.appendChild(DOMpointer);
         document.body.appendChild(DOMship);
 
         const mouseoverHandler = (event) => {
@@ -106,8 +92,6 @@ export function renderBoardSetup(player, ships, callback) {
         const mouseMoveHandler = (event) => {
             DOMship.style.left = `${event.pageX - 20}px`;
             DOMship.style.top = `${event.pageY - 20}px`;
-            // DOMpointer.style.left = `${event.pageX - 20}px`;
-            // DOMpointer.style.top = `${event.pageY - 20}px`;
         };
 
         const wheelHandler = () => {
@@ -157,7 +141,6 @@ export function renderBoardSetup(player, ships, callback) {
         }
 
         // alert("is AI player!");
-
         const ship = ships[currentShipIndex];
         const x = Math.floor(Math.random() * 10);
         const y = Math.floor(Math.random() * 10);
